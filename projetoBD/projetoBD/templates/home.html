@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+    <br><br>
+    <div class="container">
+        <div class="row justify-content-md-center">
+            <div class="col-md-auto">
+                <h2>Cadeia de restaurantes da Empresa R&R</h2>
+            </div>
+        </div>
+    </div>
+    <br><br>
+
+    <div class="media content-section">
+        <table class="table table-striped">
+            <thead>
+              <tr>
+                <th >Id</th>
+                <th >Restaurante</th>
+                <th >Morada</th>
+
+              </tr>
+            </thead>
+            
+            <tbody>
+            {%for record in records%}
+              <tr>
+                <td>{{record['id_restaurante']}}</td>
+                <td><a style="color: #8B3A3A" href="{{ url_for('restaurante', id_restaurante=record['id_restaurante'], nome_ident=record['nome_ident'])}}">
+                    {{record['nome_ident']}}</a></td>
+                <td>{{record['endereco']}}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock content %}

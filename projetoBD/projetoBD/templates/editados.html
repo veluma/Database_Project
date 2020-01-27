@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    <div class="media content-section">
+        <table class="table table-striped">
+            <thead>
+              <tr>
+                <th >Id</th>
+                <th >Nome</th>
+                <th >Local_Trabalho</th>
+              </tr>
+            </thead>
+            
+            <tbody>
+            {% for record in records %}
+              <tr>
+                <td>{{record['id_funcionario']}}</td>
+                <td>{{record['nome']}}</td>
+                <td>{{record['designacao']}}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+     <div class="media content-section">
+        <table class="table table-striped">
+            <thead>
+              <tr>
+                <th >Id</th>
+                <th >Nome</th>
+                <th >Data Alteraçao</th>
+                <th >local_trabalho_antigo</th>
+              </tr>
+            </thead>
+            
+            <tbody>
+            {% for antigo in antigos %}
+              <tr>
+                <td>{{antigo['id_funcionario']}}</td>
+                <td>{{antigo['nome']}}</td>
+                <td>{{antigo['changed_on']}}</td>
+                <td>{{antigo['designacao']}}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock content %}

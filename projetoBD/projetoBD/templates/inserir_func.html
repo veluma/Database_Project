@@ -1,0 +1,30 @@
+
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+      <div class="media">
+        <h1 style="color: #6959CD">Inserir Novo Funcionario</h1>
+      </div>
+        <form method="POST" action="" >
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Account Info</legend>
+              <label for="nome" class="form-control-label">Nome</label>
+               <input type="text" name="nome" class="form-control-lg form-control">
+            <p></p>
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="id_localconsumo">Local Consumo</label>
+              
+              <select class="custom-select" name="id_consumo" id="id_localconsumo">
+                <option selected>escolha opção...</option>
+                <option value="1">Esplanada</option>
+                <option value="2">Balcão</option>
+                <option value="3">Mesas</option>
+              </select>
+          </div>
+            </fieldset>
+            <div class="form-group">
+                <button type="submit" class="btn btn-outline-info">Confirmar</button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

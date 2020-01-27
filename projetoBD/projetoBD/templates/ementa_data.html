@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    <div class="media content-section">
+        <table class="table table-striped">
+            <thead>
+              <tr>
+                <th><h3 style="color: #6959CD">{{data_ementa}}</h3></th>
+                
+              </tr>
+            </thead>
+            
+            <tbody>
+            {% for record in records %}
+              <tr>
+                <td>{{record[0]}}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock content %}

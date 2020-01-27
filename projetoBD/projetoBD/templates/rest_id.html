@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    <div class="media content-section">
+        <table class="table table-striped">
+            <thead>
+              <tr>
+                <th >Data</th>
+                <th >Tipo</th>
+                <th >Refeicao</th>
+               
+              </tr>
+            </thead>
+            
+            <tbody>
+            {% for record in records %}
+              <tr>
+                <td><a style="color: #6959CD"  href="{{ url_for('ementa_data', id_dataementa=record['id_dataementa'], id_restaurante=record['id_restaurante'], data_ementa=record['data_ementa'])}}">{{record['data_ementa']}}</a></td>
+                <td><a style="color: #000080" href="{{ url_for('ementa_id', id_tipoementa=record['id_tipoementa'], id_restaurante=record['id_restaurante'])}}">{{record['tipo_ementa']}}</a></td>
+                <td>{{record['tipo_refeicao']}}</td>
+               
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock content %}

@@ -1,0 +1,518 @@
+-----------------------------------------------------------------------
+-- V I E W S
+-----------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW public.selectrestaurante
+ AS
+ SELECT restaurante.id_restaurante,
+    	restaurante.nome_ident, 
+	    concat(restaurante.morada, ' ', locais.freguesia, '-', locais.distritos) AS endereco
+   FROM restaurante
+     JOIN locais ON locais.id_local = restaurante.id_local;
+
+
+-----------------------------------------------------------------------
+
+-- View: public.select_alteracao
+
+-- DROP VIEW public.select_alteracao;
+
+CREATE OR REPLACE VIEW public.select_alteracao
+ AS
+ SELECT funcionario_audits.id_funcionario,
+    funcionario_audits.nome,
+    funcionario_audits.changed_on,
+    localconsumo.designacao
+   FROM funcionario_audits
+     JOIN localconsumo ON localconsumo.id_localconsumo = funcionario_audits.id_localconsumo
+  ORDER BY funcionario_audits.changed_on DESC;
+
+ALTER TABLE public.select_alteracao
+    OWNER TO postgres;
+
+
+
+-----------------------------------------------------------------------
+-- P R O C E D I M E N T O S 
+-----------------------------------------------------------------------
+
+-- PROCEDURE: public.deletar_func(integer)
+
+-- DROP PROCEDURE public.deletar_func(integer);
+
+CREATE OR REPLACE PROCEDURE public.deletar_func(
+	id integer)
+LANGUAGE 'plpgsql'
+
+AS $BODY$
+BEGIN
+ DELETE FROM public.consumo
+	WHERE id_funcionario = id;
+ DELETE FROM public.funcionario
+	WHERE id_funcionario = id;
+END
+$BODY$;
+-----------------------------------------------------------------------
+-- PROCEDURE: public.insert_func(character varying, integer, integer)
+
+-- DROP PROCEDURE public.insert_func(character varying, integer, integer);
+
+CREATE OR REPLACE PROCEDURE public.insert_func(
+	name character varying,
+	id_rest integer,
+	id_local integer)
+LANGUAGE 'plpgsql'
+
+AS $BODY$
+BEGIN
+ INSERT INTO public.funcionario(nome, id_localconsumo, id_restaurante)
+	VALUES ( name, id_local, id_rest);
+END
+$BODY$;
+
+
+-----------------------------------------------------------------------
+-- PROCEDURE: public.update_func(character varying, integer, integer)
+
+-- DROP PROCEDURE public.update_func(character varying, integer, integer);
+
+CREATE OR REPLACE PROCEDURE public.update_func(
+	name character varying,
+	id integer,
+	id_local integer)
+LANGUAGE 'plpgsql'
+
+AS $BODY$
+BEGIN
+
+    UPDATE funcionario SET nome= name, id_localconsumo=id_local
+            WHERE id_funcionario = id;
+END
+$BODY$;
+-----------------------------------------------------------------------
+-- F U N Ç O E S 
+-----------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION selectementa(id integer) 
+   RETURNS TABLE (
+	  id_restaurante integer,
+	  id_tipoementa integer,
+      tipo_ementa VARCHAR,
+      tipo_refeicao VARCHAR,
+	  data_ementa VARCHAR) 
+	  LANGUAGE 'plpgsql'
+AS $BODY$
+BEGIN
+   RETURN QUERY SELECT
+	 tipoementa.id_tipoementa, tipoementa.tipo_ementa, tiporefeicao.tipo_refeicao, dataementa.data_ementa from ementa inner join tipoementa
+		on ementa.id_tipoementa =tipoementa.id_tipoementa
+		inner join tiporefeicao
+		on ementa.id_tiporefeicao = tiporefeicao.id_tiporefeicao
+		inner join restaurante
+		on ementa.id_restaurante = restaurante.id_restaurante
+		inner join dataementa
+		on ementa.id_dataementa = dataementa.id_dataementa
+		where ementa.id_restaurante = id
+		group by tipoementa.id_tipoementa, tipoementa.tipo_ementa, tiporefeicao.tipo_refeicao, dataementa.data_ementa, ementa.id_dataementa
+		order by ementa.id_dataementa;
+	END;
+$BODY$;
+
+
+
+-----------------------------------------------------------------------
+
+-- DROP FUNCTION public.selectitem(integer, integer);
+
+CREATE OR REPLACE FUNCTION public.selectitem(
+	id integer,
+	id_rest integer)
+    RETURNS TABLE(tipo_ementa character varying, tipo_refeicao character varying, id_item integer, designacao character varying, preco double precision) 
+    LANGUAGE 'plpgsql'
+
+    COST 100
+    VOLATILE 
+    ROWS 1000
+AS $BODY$
+BEGIN
+   RETURN QUERY 
+		SELECT tipoementa.tipo_ementa, tiporefeicao.tipo_refeicao, item.id_item, item.designacao, item.preco from ementa 
+
+		inner join tipoementa  
+		on ementa.id_tipoementa = tipoementa.id_tipoementa
+		inner join tiporefeicao
+		on ementa.id_tiporefeicao =tiporefeicao.id_tiporefeicao
+		inner join restaurante
+		on ementa.id_restaurante = restaurante.id_restaurante
+		inner join dataementa
+		on ementa.id_dataementa = dataementa.id_dataementa
+		inner join item
+		on ementa.id_item = item.id_item
+
+		where ementa.id_restaurante =id_rest and ementa.id_tipoementa =id
+		group by tipoementa.tipo_ementa, tiporefeicao.tipo_refeicao, item.id_item, item.designacao, item.preco;
+	END;
+$BODY$;
+
+
+-----------------------------------------------------------------------
+-- FUNCTION: public.select_consumo(integer)
+
+-- DROP FUNCTION public.select_consumo(integer);
+
+CREATE OR REPLACE FUNCTION public.select_consumo(
+	id integer)
+    RETURNS TABLE(data_consumo timestamp without time zone, designacao character varying, funcionario character varying, cliente character varying, nif character varying, total double precision) 
+    LANGUAGE 'plpgsql'
+
+    COST 100
+    VOLATILE 
+    ROWS 1000
+AS $BODY$
+BEGIN
+   RETURN QUERY 
+		SELECT consumo.data_consumo, localconsumo.designacao, funcionario.nome, cliente.nome, cliente.nif, sum(item_consumo.total) as total from consumo 
+
+		inner join localconsumo
+		on consumo.id_localconsumo = localconsumo.id_localconsumo
+		inner join funcionario
+		on consumo.id_funcionario = funcionario.id_funcionario
+		inner join cliente
+		on consumo.id_cliente = cliente.id_cliente
+		inner join restaurante
+		on funcionario.id_restaurante = restaurante.id_restaurante
+		inner join item_consumo
+		on consumo.id_consumo = item_consumo.id_consumo
+
+		where funcionario.id_restaurante = id
+		group by consumo.data_consumo, localconsumo.designacao, funcionario.nome, cliente.nome, cliente.nif
+		order by consumo.data_consumo;
+	END;
+$BODY$;
+
+ALTER FUNCTION public.select_consumo(integer)
+    OWNER TO postgres;
+
+-----------------------------------------------------------------------
+-- FUNCTION: public.selec_funcionario(integer)
+
+-- DROP FUNCTION public.selec_funcionario(integer);
+
+CREATE OR REPLACE FUNCTION public.selec_funcionario(
+	id integer)
+    RETURNS TABLE(id_funcionario integer, nome character varying, designacao character varying) 
+    LANGUAGE 'plpgsql'
+
+    COST 100
+    VOLATILE 
+    ROWS 1000
+AS $BODY$
+BEGIN
+   RETURN QUERY 
+	select funcionario.id_funcionario, funcionario.nome, localconsumo.designacao from funcionario
+		inner join restaurante
+			on funcionario.id_restaurante =restaurante.id_restaurante
+		inner join localconsumo
+			on localconsumo.id_localconsumo = funcionario.id_localconsumo
+		where funcionario.id_restaurante = id;	
+	END;
+$BODY$;
+
+ALTER FUNCTION public.selec_funcionario(integer)
+    OWNER TO postgres;
+
+-----------------------------------------------------------------------
+
+-- FUNCTION: public.selec_data(integer, integer)
+
+-- DROP FUNCTION public.selec_data(integer, integer);
+
+CREATE OR REPLACE FUNCTION public.selec_data(
+	id integer,
+	id_rest integer)
+    RETURNS TABLE(data_ementa character varying, id_tiporefeicao integer, tipo_refeicao character varying, id_item integer, designacao character varying, preco double precision) 
+    LANGUAGE 'plpgsql'
+
+    COST 100
+    VOLATILE 
+    ROWS 1000
+AS $BODY$
+BEGIN
+   RETURN QUERY 
+		SELECT dataementa.data_ementa, tiporefeicao.id_tiporefeicao, tiporefeicao.tipo_refeicao, item.id_item, item.designacao, item.preco from ementa 
+
+		inner join tipoementa  
+		on ementa.id_tipoementa = tipoementa.id_tipoementa
+		inner join tiporefeicao
+		on ementa.id_tiporefeicao =tiporefeicao.id_tiporefeicao
+		inner join restaurante
+		on ementa.id_restaurante = restaurante.id_restaurante
+		inner join dataementa
+		on ementa.id_dataementa = dataementa.id_dataementa
+		inner join item
+		on ementa.id_item = item.id_item
+
+		where ementa.id_restaurante = id_rest and dataementa.id_dataementa =id
+		group by dataementa.data_ementa,tiporefeicao.id_tiporefeicao, tiporefeicao.tipo_refeicao, item.id_item, item.designacao, item.preco
+		order by tiporefeicao.id_tiporefeicao;
+	END;
+$BODY$;
+
+ALTER FUNCTION public.selec_data(integer, integer)
+    OWNER TO postgres;
+
+-----------------------------------------------------------------------
+-- FUNCTION: public.selec_alergia(integer)
+
+-- DROP FUNCTION public.selec_alergia(integer);
+
+CREATE OR REPLACE FUNCTION public.selec_alergia(
+	id integer)
+    RETURNS TABLE(id_item integer, designacao character varying, id_alergia integer, alergia character varying) 
+    LANGUAGE 'plpgsql'
+
+    COST 100
+    VOLATILE 
+    ROWS 1000
+AS $BODY$
+BEGIN
+   RETURN QUERY 
+		select itenalergia.id_item, item.designacao, itenalergia.id_alergia, alergia.detalhes from item 
+			inner join itenalergia
+					on itenalergia.id_item =item.id_item
+			inner join alergia on
+					itenalergia.id_alergia = alergia.id_alergia
+
+		where itenalergia.id_item = id
+		group by itenalergia.id_item, item.designacao, itenalergia.id_alergia, alergia.detalhes;
+	END;
+$BODY$;
+
+ALTER FUNCTION public.selec_alergia(integer)
+    OWNER TO postgres;
+
+
+
+-----------------------------------------------------------------------
+-- FUNCOES C/ CURSOR
+-----------------------------------------------------------------------
+
+-- FUNCTION: public.get_data(integer, integer)
+
+-- DROP FUNCTION public.get_data(integer, integer);
+
+CREATE OR REPLACE FUNCTION public.get_data(
+	id integer,
+	id_rest integer)
+    RETURNS text
+    LANGUAGE 'plpgsql'
+
+    COST 100
+    VOLATILE 
+AS $BODY$
+DECLARE 
+	pequeno text DEFAULT '';
+    almoco TEXT DEFAULT '';
+	jantar TEXT DEFAULT '';
+	acomp TEXT DEFAULT '';
+    rec_d   RECORD;
+    cur_d CURSOR(id integer, id_rest integer) 
+       FOR SELECT dataementa.data_ementa, tiporefeicao.id_tiporefeicao, tiporefeicao.tipo_refeicao, item.id_item, item.designacao, item.preco 
+	   from ementa 
+			inner join tipoementa  on ementa.id_tipoementa = tipoementa.id_tipoementa
+			inner join tiporefeicao on ementa.id_tiporefeicao =tiporefeicao.id_tiporefeicao
+			inner join restaurante on ementa.id_restaurante = restaurante.id_restaurante
+			inner join dataementa on ementa.id_dataementa = dataementa.id_dataementa
+			inner join item on ementa.id_item = item.id_item
+		where ementa.id_restaurante = id_rest and dataementa.id_dataementa = id;
+BEGIN
+   -- Open the cursor
+   OPEN cur_d (id,id_rest);
+   
+   LOOP
+    -- fetch row into the film
+      FETCH cur_d INTO rec_d;
+    -- exit when no more row to fetch
+      EXIT WHEN NOT FOUND;
+ 
+    -- build the output
+      IF rec_d.tipo_refeicao LIKE '%Peq%' THEN 
+         pequeno := pequeno || '-' || rec_d.designacao || ', Preço:'||rec_d.preco;
+      END IF;
+	  IF rec_d.tipo_refeicao LIKE '%Alm%' THEN 
+         almoco := almoco || '-' || rec_d.designacao || ', Preço:'||rec_d.preco;
+      END IF;
+	  IF rec_d.tipo_refeicao LIKE '%Jan%' THEN 
+         jantar := jantar || '-' || rec_d.designacao || ', Preço:'||rec_d.preco;
+      END IF;
+	   IF rec_d.tipo_refeicao LIKE '%Ext%' THEN 
+         acomp := acomp || '-' || rec_d.designacao || ', Preço:'||rec_d.preco;
+      END IF;
+   END LOOP;
+  
+   -- Close the cursor
+   CLOSE cur_d;
+ 
+   RETURN concat(chr(10),' PEQUENO ALMOÇO', pequeno, chr(10), ' ALMOÇO', almoco, chr(10), ' JANTAR', jantar, chr(10), ' ACOMPANHAMETO', acomp);
+END; $BODY$;
+
+ALTER FUNCTION public.get_data(integer, integer)
+    OWNER TO postgres;
+
+-----------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION func_zona_porRestaurante(id_rest INTEGER)
+   RETURNS text AS $$
+   
+DECLARE 
+
+    func TEXT DEFAULT '';
+    rec_res   RECORD;
+    cur_rest CURSOR(id_rest INTEGER) 
+       FOR SELECT Restaurante.nome_ident, LocalConsumo.designacao,Funcionario.nome
+       
+	FROM Restaurante join Funcionario ON Restaurante.id_restaurante=Funcionario.id_restaurante
+	join Localconsumo ON Funcionario.id_localconsumo=LocalConsumo.id_localconsumo
+	
+	WHERE Restaurante.id_restaurante = id_rest;
+	
+BEGIN
+
+   OPEN cur_rest(id_rest);
+   
+   LOOP
+      FETCH cur_rest INTO rec_res;
+
+      EXIT WHEN NOT FOUND;
+	  
+         func := func || rec_res.nome_ident || ':' || chr(13) || rec_res.designacao || ':' 
+		 || rec_res.nome || chr(13) || chr(13);
+
+   END LOOP;
+  
+   CLOSE cur_rest;
+ 
+   RETURN func;
+END; $$
+ 
+LANGUAGE plpgsql;
+
+-----------------------------------------------------------------------
+-- FUNCOES C/ X M L 
+-----------------------------------------------------------------------
+
+
+--DROP FUNCTION xml_function(integer,integer) 
+CREATE OR REPLACE FUNCTION xml_function(id integer, id_rest integer) 
+	RETURNS table(a xml) 
+	AS $BODY$
+DECLARE output XML;
+BEGIN 
+return query 
+			select XMLElement (name "Ementa",
+				  (SELECT XMLAGG(XMLFOREST(tiporefeicao.tipo_refeicao as "Refeição", 
+						   item.designacao as "Item", 
+						   item.preco as "Preco"))))
+			from ementa 
+			inner join tipoementa  on ementa.id_tipoementa = tipoementa.id_tipoementa
+			inner join tiporefeicao on ementa.id_tiporefeicao =tiporefeicao.id_tiporefeicao
+			inner join restaurante on ementa.id_restaurante = restaurante.id_restaurante
+			inner join dataementa on ementa.id_dataementa = dataementa.id_dataementa
+			inner join item on ementa.id_item = item.id_item
+			where ementa.id_restaurante = id_rest and dataementa.id_dataementa=id
+			group by  tiporefeicao.tipo_refeicao;
+
+END;
+$BODY$
+  LANGUAGE plpgsql;
+  
+
+
+-----------------------------------------------------------------------
+-- S E Q U E N C I A
+-----------------------------------------------------------------------
+
+CREATE SEQUENCE public.minha_sequencia
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
+-- DROP TABLE public.funcionario_audits;
+	
+CREATE TABLE public.funcionario_audits
+(
+    id integer NOT NULL DEFAULT nextval('minha_sequencia'),
+    id_funcionario integer NOT NULL,
+    id_localconsumo integer NOT NULL,
+    id_restaurante integer NOT NULL,
+    changed_on timestamp(6) with time zone NOT NULL,
+    nome character varying(256),
+    CONSTRAINT funcionario_audits_pkey PRIMARY KEY (id)
+)
+
+
+-----------------------------------------------------------------------
+-- T R I G G E R
+-----------------------------------------------------------------------
+
+-- FUNCTION: public.minha_funcao(refcursor, refcursor)
+
+-- DROP FUNCTION public.minha_funcao(refcursor, refcursor);
+
+CREATE OR REPLACE FUNCTION public.minha_funcao(
+	refcursor,
+	refcursor)
+    RETURNS SETOF refcursor 
+    LANGUAGE 'plpgsql'
+
+    COST 100
+    VOLATILE 
+    ROWS 1000
+AS $BODY$
+BEGIN
+    OPEN $1 FOR SELECT * FROM funcionario;
+    RETURN NEXT $1;
+    OPEN $2 FOR SELECT * FROM cliente;
+    RETURN NEXT $2;
+    RETURN;
+END;
+$BODY$;
+
+ALTER FUNCTION public.minha_funcao(refcursor, refcursor)
+    OWNER TO postgres;
+
+
+-- FUNCTION: public.funcionario_changes()
+
+-- DROP FUNCTION public.funcionario_changes();
+
+CREATE FUNCTION public.funcionario_changes()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+BEGIN
+   IF NEW.id_localconsumo <> OLD.id_localconsumo THEN
+       INSERT INTO funcionario_audits(id_funcionario, nome, id_localconsumo, id_restaurante, changed_on)
+       VALUES(OLD.id_funcionario, OLD.nome, OLD.id_localconsumo, OLD.id_restaurante, now());
+   END IF;
+   
+   IF NEW.nome <> OLD.nome THEN
+       INSERT INTO funcionario_audits(id_funcionario, nome, id_localconsumo, id_restaurante, changed_on)
+       VALUES(OLD.id_funcionario, OLD.nome, OLD.id_localconsumo, OLD.id_restaurante, now());
+   END IF;
+ 
+   RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public.funcionario_changes()
+    OWNER TO postgres;
+
+
+
+
+

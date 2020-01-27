@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    <div class="media content-section">
+        <table class="table table-striped">
+            <thead>
+              <tr>
+                <th >Data</th>
+                <th >Local_atendimento</th>
+                <th >Funcionario</th>
+                <th >Cliente</th>
+                <th >NIF</th>
+                <th >Total</th>
+              </tr>
+            </thead>
+            
+            <tbody>
+            {% for record in records %}
+              <tr>
+                <td>{{record['data_consumo']}}</td>
+                <td>{{record['designacao']}}</td>
+                <td>{{record['funcionario']}}</td>
+                <td>{{record['cliente']}}</td>
+                <td>{{record['nif']}}</td>
+                <td>{{record['total']}}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock content %}

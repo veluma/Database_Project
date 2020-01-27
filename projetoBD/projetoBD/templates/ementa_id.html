@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    <div class="media content-section">
+        <table class="table table-striped">
+            <thead>
+              <tr>
+                <th >Tipo</th>
+                <th >Refeição</th>
+                <th >Item</th>
+                <th >Preço</th>
+              
+              </tr>
+            </thead>
+            
+            <tbody>
+            {% for record in records %}
+              <tr>
+                <td>{{record['tipo_ementa']}}</td>
+                <td>{{record['tipo_refeicao']}}</td>
+                <td><a style="color: #836FFF"  href="{{ url_for('item_alergia', id_item=record['id_item'])}}">{{record['designacao']}}</a></td>
+                <td>{{record['preco']}}</td>
+            
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock content %}

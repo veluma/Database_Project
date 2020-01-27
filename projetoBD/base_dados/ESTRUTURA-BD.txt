@@ -1,0 +1,96 @@
+CREATE TABLE Locais (
+    id_local SERIAL NOT NULL PRIMARY KEY,
+    distritos VARCHAR(50) NOT NULL,
+    freguesia VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Restaurante (
+    id_restaurante SERIAL NOT NULL PRIMARY KEY,
+    morada VARCHAR(50) NOT NULL,
+    nome_ident VARCHAR(50) NOT NULL,
+    id_local INTEGER NOT NULL REFERENCES Locais(id_local)
+);
+
+CREATE TABLE Cliente(
+    id_cliente SERIAL NOT NULL PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL,
+    nif VARCHAR(10) NOT NULL
+);
+
+CREATE TABLE Localconsumo (
+    id_localconsumo SERIAL NOT NULL PRIMARY KEY,
+    designacao VARCHAR(200) NOT NULL,
+    );
+
+CREATE TABLE Funcionario (
+    id_funcionario SERIAL NOT NULL PRIMARY KEY,
+    nome VARCHAR(256) NOT NULL,
+    id_localconsumo INTEGER NOT NULL REFERENCES Localconsumo(id_localconsumo),
+    id_restaurante INTEGER NOT NULL REFERENCES Restaurante(id_restaurante)
+
+);
+
+CREATE TABLE TipoEmenta (
+    id_tipoementa SERIAL NOT NULL PRIMARY KEY,
+    tipo_ementa VARCHAR(30) NOT NULL
+    
+);
+
+CREATE TABLE TipoRefeicao (
+    id_tiporefeicao SERIAL NOT NULL PRIMARY KEY,
+    tipo_refeicao VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Item (
+    id_item SERIAL NOT NULL PRIMARY KEY,
+    designacao VARCHAR(50) NOT NULL,
+    preco FLOAT NOT NULL,
+    id_tipoementa INTEGER NOT NULL REFERENCES TipoEmenta(id_tipoementa)
+);
+
+CREATE TABLE DataEmenta (
+    id_dataementa SERIAL NOT NULL PRIMARY KEY,
+    data_ementa VARCHAR(50) NOT NULL
+);
+
+
+CREATE TABLE Ementa (
+    id_ementa SERIAL NOT NULL PRIMARY KEY,
+    id_tipoementa INTEGER NOT NULL REFERENCES TipoEmenta(id_tipoementa),
+    id_tiporefeicao INTEGER NOT NULL REFERENCES TipoRefeicao(id_tiporefeicao),
+    id_restaurante INTEGER NOT NULL REFERENCES Restaurante(id_restaurante),
+    id_dataementa INTEGER NOT NULL REFERENCES DataEmenta(id_dataementa),
+    id_item INTEGER NOT NULL REFERENCES Item(id_item)
+);
+
+CREATE TABLE Consumo(
+    id_consumo SERIAL NOT NULL PRIMARY KEY,
+    data_consumo timestamp NOT NULL,
+    id_cliente INTEGER NOT NULL REFERENCES Cliente(id_cliente),
+    id_localconsumo INTEGER NOT NULL REFERENCES Localconsumo(id_localconsumo),
+    id_funcionario INTEGER NOT NULL REFERENCES Funcionario(id_funcionario),
+);
+
+CREATE TABLE item_consumo(
+   id_item INTEGER NOT NULL REFERENCES Item(id_item),
+   id_consumo INTEGER NOT NULL REFERENCES Consumo(id_consumo),
+   qde INTEGER NOT NULL,
+   total FLOAT NOT NULL,
+   PRIMARY KEY(id_item,id_consumo)
+); 
+
+
+CREATE TABLE Alergia (
+    id_alergia SERIAL NOT NULL PRIMARY KEY,
+    detalhes VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE ItenAlergia(
+    id_item INTEGER NOT NULL REFERENCES Item(id_item),
+    id_alergia INTEGER NOT NULL REFERENCES Alergia(id_alergia),
+    PRIMARY KEY(id_item,id_alergia)
+
+);
+
+
+

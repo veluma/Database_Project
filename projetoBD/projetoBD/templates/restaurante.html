@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+  <br><br>
+    <div class="container">
+        <div class="row justify-content-md-center">
+        	<div class="col-md-auto">
+        		<h1 style="color: #6959CD">Restaurante {{nome_ident}}</h1>
+        	</div>
+        </div>
+    </div>
+    <br><br><br>
+
+         <div class="row justify-content-center">
+          	<div class="col-4">
+          		 <a href="{{ url_for('rest_id', id_restaurante=id_restaurante)}}" class="btn btn-dark btn-lg btn-block">Ementa</a>
+          	</div>
+            <div class="col-4">
+               <a href="{{ url_for('consumo', id_restaurante=id_restaurante)}}"  class="btn btn-outline-secondary btn-lg btn-block"> Consumos</a>
+            </div>
+
+          	<div class="col-4">
+          		 <a href="{{ url_for('funcionario', id_restaurante=id_restaurante)}}"  class="btn btn-dark btn-lg btn-block">Funcionario</a>
+          	</div>
+            
+      </div>
+  </div>
+{% endblock content %}

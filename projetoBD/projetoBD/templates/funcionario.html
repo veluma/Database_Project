@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+    
+    <div class="row justify-content-end">
+        <div class="col-4">
+             <a href="{{ url_for('inserir_func', id_restaurante=id_restaurante)}}" class="btn btn-light btn-md btn-block" style="color: #6959CD">Inserir Novo Funcionario</a>
+        </div>
+    </div>
+<p></p>
+    <div class="media content-section">
+        <table class="table table-striped">
+            <thead>
+              <tr>
+                <th >Id</th>
+                <th >Nome</th>
+                <th >Local_Trabalho</th>
+                <th >Editar</th>
+                <th >Deletar</th>
+              </tr>
+            </thead>
+            
+            <tbody>
+            {% for record in records %}
+              <tr>
+                <td>{{record['id_funcionario']}}</td>
+                <td>{{record['nome']}}</td>
+                <td>{{record['designacao']}}</td>
+                <td><a href="{{ url_for('editar_func', id_funcionario=record['id_funcionario'], nome=record['nome'], id_restaurante=id_restaurante)}}" class="btn btn-sm btn-block btn-info"> Editar </a></td>
+                <td><a href="{{ url_for('deletar_func', id_funcionario=record['id_funcionario'], nome=record['nome'], id_restaurante=id_restaurante)}}" class="btn btn-sm btn-block btn-danger"> Deletar </a></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock content %}
